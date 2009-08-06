@@ -23,3 +23,20 @@ require 'buildr/scala/bdd'
 require 'buildr/scala/shell'
 
 Object::Scala = Buildr::Scala
+
+module Buildr
+  class ScalaNature < Buildr::Nature
+
+    def initialize()
+      super(:scala, ["ch.epfl.lamp.sdt.core.scalanature", "org.eclipse.jdt.core.javanature"], 
+        ["ch.epfl.lamp.sdt.core.scalabuilder"],
+        ["ch.epfl.lamp.sdt.launching.SCALA_CONTAINER", "org.eclipse.jdt.launching.JRE_CONTAINER"])
+    end
+
+    def applies(project)
+      File.exists? project.path_to(:src, :main, :scala)
+    end
+  end 
+
+  Project.natures_registry.add_nature(ScalaNature.new)
+end

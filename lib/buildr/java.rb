@@ -21,3 +21,18 @@ require 'buildr/java/bdd'
 require 'buildr/java/packaging'
 require 'buildr/java/commands'
 require 'buildr/java/deprecated'
+
+module Buildr
+  class JavaNature < Buildr::Nature
+
+    def initialize()
+      super(:java, ["org.eclipse.jdt.core.javanature"], ["org.eclipse.jdt.core.javabuilder"], ["org.eclipse.jdt.launching.JRE_CONTAINER"])
+    end
+
+    def applies(project)
+      File.exists? project.path_to(:src, :main, :java)
+    end
+  end 
+
+  Project.natures_registry.add_nature(JavaNature.new)
+end 

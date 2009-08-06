@@ -58,7 +58,7 @@ module Buildr
       eclipse = project.task('eclipse')
 
       # Check if project has scala facet
-      scala = project.compile.language == :scala
+      #scala = project.compile.language == :scala
 
       # Only for projects that we support
       supported_languages = [:java, :scala]
@@ -108,8 +108,11 @@ module Buildr
               classpathentry.lib libs
               classpathentry.var m2_libs, Eclipse.instance.options.m2_repo_var, m2repo
 
-              classpathentry.con 'ch.epfl.lamp.sdt.launching.SCALA_CONTAINER' if scala
-              classpathentry.con 'org.eclipse.jdt.launching.JRE_CONTAINER'
+              project.applicable_natures.collect {|nature| nature.classpath_containers}.flatten.uniq.each{|container|
+                classpathentry.con container
+              }
+              #classpathentry.con 'ch.epfl.lamp.sdt.launching.SCALA_CONTAINER' if scala
+              #classpathentry.con 'org.eclipse.jdt.launching.JRE_CONTAINER'
             end
           end
         end
@@ -123,19 +126,28 @@ module Buildr
               xml.name project.id
               xml.projects
               xml.buildSpec do
-                if scala
+                project.applicable_natures.collect {|nature| nature.eclipse_builders}.flatten.uniq.each{|builder|
                   xml.buildCommand do
-                    xml.name 'ch.epfl.lamp.sdt.core.scalabuilder'
+                    xml.name builder
                   end
-                else
-                  xml.buildCommand do
-                    xml.name 'org.eclipse.jdt.core.javabuilder'
-                  end
-                end
+                }
+                # if scala
+                #   xml.buildCommand do
+                #     xml.name 'ch.epfl.lamp.sdt.core.scalabuilder'
+                #   end
+                # else
+                #   xml.buildCommand do
+                #     xml.name 'org.eclipse.jdt.core.javabuilder'
+                #   end
+                # end
               end
               xml.natures do
-                xml.nature 'ch.epfl.lamp.sdt.core.scalanature' if scala
-                xml.nature 'org.eclipse.jdt.core.javanature'
+                project.applicable_natures.collect {|nature| nature.eclipse_natures}.flatten.uniq.each{|nature|
+                  xml.nature nature
+                }
+                
+                #xml.nature 'ch.epfl.lamp.sdt.core.scalanature' if scala
+                #xml.nature 'org.eclipse.jdt.core.javanature'
               end
             end
           end

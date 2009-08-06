@@ -742,7 +742,68 @@ describe Project, '#task' do
   end
 end
 
-
+describe Buildr::NaturesRegistry do
+  
+  before :all do
+    class DummyNature < Nature
+      def initialize()
+        super(:dummy)
+      end
+    end
+    @dummy = DummyNature.new
+    class DummyNatureAsWell < Nature
+      def initialize()
+        super(:dummy)
+      end
+    end
+    @dummyToo = DummyNatureAsWell.new
+  end
+  
+  it 'should be available as a Project class method' do
+    instance = Buildr::Project.natures_registry
+    instance.should be_instance_of(Buildr::NaturesRegistry)
+  end
+  
+  it 'should accept new natures' do
+    lambda { Buildr::Project.natures_registry.add_nature(@dummy) }.should_not raise_error
+  end
+  
+  it 'should not accept incorrect objects' do
+     lambda { Buildr::Project.natures_registry.add_nature(define('uh')) }.should raise_error(RuntimeError, /uh is not a nature!/)
+   end
+  it 'should not accept duplicate natures' do
+    lambda { Buildr::Project.natures_registry.add_nature(@dummyToo) }.should raise_error(RuntimeError, /A nature with the same id is already present/)
+  end
+  
+  it 'should list all available natures' do
+    # We also have the Java and Scala natures in there.
+    Buildr::Project.natures_registry.all().should include(@dummy)
+  end
+  
+  it 'should determine project natures from the applies method' do
+    class DummyNatureAlwaysApply < Nature
+      def initialize()
+        super(:always)
+      end
+      def applies(project)
+        true # always applies
+      end
+    end
+    always = DummyNatureAlwaysApply.new
+    Buildr::Project.natures_registry.add_nature(always)
+    foo = define('foo')
+    foo.applicable_natures.should include(always)
+    #By default applies return false.
+    foo.applicable_natures.should_not include(@dummy)
+  end
+  
+  it 'should let projects define their natures' do
+    foo = define('foo', :natures => :dummy)
+    foo.applicable_natures.should include(@dummy)
+    bar = define('bar', :natures => [:dummy])
+    bar.applicable_natures.should include(@dummy)
+  end
+end
 =begin
 describe Buildr::Generate do 
   it 'should be able to create buildfile from directory structure' do

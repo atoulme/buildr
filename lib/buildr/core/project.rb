@@ -18,7 +18,76 @@ require 'buildr/core/util'
 
 
 module Buildr
+  
+  # The nature class is extended into project natures.
+  # See for example the JavaNature of the ScalaNature.
+  # A nature defines an unique id amonsgt all natures.
+  # 
+  # These fields may be set when initializing an instance:
+  # eclipse_builders
+  #   Used by the Eclipse task to output in .project, a builder being an Eclipse-specific background job to build a project.
+  # eclipse_natures
+  #   Used by the Eclipse task to output in .classpath, 
+  #   an Eclipse nature is an Eclipse-specific concept used by the framework to determine the projects features. 
+  # classpath_containers
+  #  Used by the Eclipse task to output in .classpath,
+  #   it is a special container identified by Eclipse for compilation.
+  #
+  class Nature
 
+    attr_reader :eclipse_natures, :eclipse_builders, :classpath_containers, :id
+
+    def initialize(id, eclipse_natures = Array.new, eclipse_builders = Array.new, classpath_containers= Array.new)
+      @id = id
+      @eclipse_natures = eclipse_natures
+      @eclipse_builders = eclipse_builders
+      @classpath_containers = classpath_containers
+    end  
+
+    # Returns true if the nature applies to the project
+    def applies(project)
+      false
+    end
+  end
+  
+  # The natures registry
+  # This class works as a singleton and contains all the available natures.
+  #
+  class NaturesRegistry
+    include Singleton
+
+    def initialize()
+      @registered_natures = Array.new
+    end
+
+    # Adds a nature to the registry.
+    # Raises exception if the object provided isn't a Nature 
+    # or if a Nature instance is already registered with the same id.
+    def add_nature(nature)
+      raise "#{nature} is not a nature!" if (!nature.is_a? Nature)
+      raise "A nature with the same id is already present" if (get(nature.id))
+      @registered_natures << nature
+    end
+
+    # Returns a nature, from its id.
+    def get(nature)
+      if (nature.is_a? Symbol) then
+        @registered_natures.each {|n|
+          return n if (n.id == nature)
+        }
+      elsif (nature.is_a? String) then
+        @registered_natures.each {|n|
+          return n if (n.id.to_s == nature)
+        }
+      end
+      nil
+    end
+
+    # Returns all available natures
+    def all()
+      return @registered_natures.dup;
+    end
+  end
   # Symbolic mapping for directory layout.  Used for both the default and custom layouts.
   #
   # For example, the default layout maps [:source, :main, :java] to 'src/main/java', and
@@ -380,6 +449,10 @@ module Buildr
         @callbacks ||= []
       end
 
+      # Access the natures registry
+      def natures_registry #:nodoc:
+        return NaturesRegistry.instance
+      end
     end
 
 
@@ -408,6 +481,12 @@ module Buildr
         hash.update(state=>methods)
       end
     end
+    
+    # Gives the natures defined on the project
+    # and the ones that apply on the project.
+    def applicable_natures()
+      NaturesRegistry.instance.all().select {|n| (natures.include?(n.id)) || n.applies(self)}
+    end
 
     # :call-seq:
     #   base_dir => path
@@ -435,7 +514,26 @@ module Buildr
       end
       @base_dir
     end
-
+    
+    # :call-seq:
+    #   natures => [:n1, :n2]
+    #
+    # Returns the project's natures.
+    #
+    # If no natures are defined on the project, the project will look for the 
+    # natures defined in the parent's project and return them instead.
+    # 
+    def natures
+      if @natures.nil?
+        if parent
+          @natures = parent.natures
+        else
+          @natures = []
+        end
+      end
+      @natures  
+    end
+    
     # Returns the layout associated with this project.
     def layout
       @layout ||= (parent ? parent.layout : Layout.default).clone
@@ -603,6 +701,18 @@ module Buildr
     def base_dir=(dir)
       raise 'Cannot set base directory twice, or after reading its value' if @base_dir
       @base_dir = File.expand_path(dir)
+    end
+    
+    # :call-seq:
+    #   natures = [n1, n2]
+    #
+    # Sets the project's natures. Allows you to specify natures by calling
+    # this accessor, or with the :natures property when calling #define.
+    #
+    # You can only set the natures once for a given project.
+    def natures=(natures)
+      raise 'Cannot set natures twice, or after reading its value' if @natures
+      @natures = (natures.is_a? Array) ? natures : [natures]
     end
 
     # Sets the project layout.  Accepts Layout object or class (or for that matter, anything
@@ -862,5 +972,6 @@ module Buildr
   def projects(*args)
     Project.projects *args
   end
-
 end
+
+
