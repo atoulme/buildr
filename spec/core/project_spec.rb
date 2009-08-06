@@ -751,12 +751,18 @@ describe Buildr::NaturesRegistry do
       end
     end
     @dummy = DummyNature.new
-    class DummyNatureAsWell < Nature
+    class OtherDummyNature < Nature
+      def initialize()
+        super(:otherdummy)
+      end
+    end
+    @otherdummy = OtherDummyNature.new
+    class InvalidNature < Nature
       def initialize()
         super(:dummy)
       end
     end
-    @dummyToo = DummyNatureAsWell.new
+    @invalid = InvalidNature.new
   end
   
   it 'should be available as a Project class method' do
@@ -768,11 +774,17 @@ describe Buildr::NaturesRegistry do
     lambda { Buildr::Project.natures_registry.add_nature(@dummy) }.should_not raise_error
   end
   
+  it 'should accept new natures to be placed before registered ones' do
+    lambda { Buildr::Project.natures_registry.add_nature(@otherdummy, :dummy) }.should_not raise_error
+    lambda {Buildr::Project.natures_registry.all().index(@otherdummy) < 
+        Buildr::Project.natures_registry.all().index(@otherdummy)}.should be_true
+  end
+  
   it 'should not accept incorrect objects' do
      lambda { Buildr::Project.natures_registry.add_nature(define('uh')) }.should raise_error(RuntimeError, /uh is not a nature!/)
    end
   it 'should not accept duplicate natures' do
-    lambda { Buildr::Project.natures_registry.add_nature(@dummyToo) }.should raise_error(RuntimeError, /A nature with the same id is already present/)
+    lambda { Buildr::Project.natures_registry.add_nature(@invalid) }.should raise_error(RuntimeError, /A nature with the same id is already present/)
   end
   
   it 'should list all available natures' do

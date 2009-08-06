@@ -13,30 +13,19 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-
-ENV['SCALA_HOME'] ||= '/opt/local/share/scala/' if File.exist?('/opt/local/share/scala/lib/scala-compiler.jar')
-Buildr.repositories.remote << 'http://scala-tools.org/repo-releases'
-
-require 'buildr/scala/compiler'
-require 'buildr/scala/tests'
-require 'buildr/scala/bdd'
-require 'buildr/scala/shell'
-
-Object::Scala = Buildr::Scala
-
 module Buildr
-  class ScalaNature < Buildr::Nature
+  class OSGiNature < Buildr::Nature
 
     def initialize()
-      super(:scala, ["ch.epfl.lamp.sdt.core.scalanature", "org.eclipse.jdt.core.javanature"], 
-        ["ch.epfl.lamp.sdt.core.scalabuilder"],
-        ["ch.epfl.lamp.sdt.launching.SCALA_CONTAINER", "org.eclipse.jdt.launching.JRE_CONTAINER"])
+      super(:osgi, ["org.eclipse.pde.PluginNature"], 
+        ["org.eclipse.pde.ManifestBuilder", "org.eclipse.pde.SchemaBuilder"],
+        ["org.eclipse.pde.core.requiredPlugins"])
     end
 
     def applies(project)
-      File.exists? project.path_to(:src, :main, :scala)
+      ((File.exists? project.path_to("plugin.xml")) || (File.exists? project.path_to("OSGI-INF")))
     end
   end 
 
-  Project.natures_registry.add_nature(ScalaNature.new, :java)
+  Project.natures_registry.add_nature(OSGiNature.new, :java)
 end

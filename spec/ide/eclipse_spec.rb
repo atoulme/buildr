@@ -16,13 +16,15 @@
 
 require File.join(File.dirname(__FILE__), '../spec_helpers')
 
-
+OSGI_CONTAINER = 'org.eclipse.pde.core.requiredPlugins'
 JAVA_CONTAINER  = 'org.eclipse.jdt.launching.JRE_CONTAINER'
 SCALA_CONTAINER = 'ch.epfl.lamp.sdt.launching.SCALA_CONTAINER'
 
+OSGI_NATURE = 'org.eclipse.pde.PluginNature'
 SCALA_NATURE = 'ch.epfl.lamp.sdt.core.scalanature'
 JAVA_NATURE  = 'org.eclipse.jdt.core.javanature'
 
+OSGI_BUILDERS = ['org.eclipse.pde.ManifestBuilder', 'org.eclipse.pde.SchemaBuilder']
 SCALA_BUILDER = 'ch.epfl.lamp.sdt.core.scalabuilder'
 JAVA_BUILDER  = 'org.eclipse.jdt.core.javabuilder'
 
@@ -131,9 +133,52 @@ describe Buildr::Eclipse do
         build_commands.should_not include(JAVA_BUILDER)
       end
     end
+    
+    describe 'OSGi project' do
+      
+      before do
+        write 'buildfile'
+        write 'src/main/java/Activator.java'
+        write 'plugin.xml'
+      end
+      
+      it 'should have OSGi nature before Java nature' do
+        define('foo')
+        project_natures.should include(OSGI_NATURE)
+        project_natures.should include(JAVA_NATURE)
+        project_natures.index(OSGI_NATURE).should < project_natures.index(JAVA_NATURE)
+      end
+      
+      it 'should have OSGi build commands and the Java build command' do
+        define('foo')
+        build_commands.should include(OSGI_BUILDERS[0])
+        build_commands.should include(OSGI_BUILDERS[1])
+        build_commands.should include(JAVA_BUILDER)
+      end
+    end
   end
   
   describe "eclipse's .classpath file" do
+    
+    describe 'osgi project' do
+
+      def classpath_containers attribute='path'
+        classpath_xml_elements.collect("classpathentry[@kind='con']") { |n| n.attributes[attribute] }
+      end
+
+      before do
+        write 'buildfile'
+        write 'src/main/java/Activator.java'
+        write 'plugin.xml'
+      end
+
+      it 'should have OSGI_CONTAINER before JAVA_CONTAINER' do
+        define('foo')
+        classpath_containers.should include(OSGI_CONTAINER)
+        classpath_containers.should include(JAVA_CONTAINER)
+        classpath_containers.index(OSGI_CONTAINER).should < classpath_containers.index(JAVA_CONTAINER)
+      end
+    end
     
     describe 'scala project' do
 

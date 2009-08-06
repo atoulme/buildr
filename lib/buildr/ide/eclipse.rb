@@ -57,9 +57,6 @@ module Buildr
     after_define do |project|
       eclipse = project.task('eclipse')
 
-      # Check if project has scala facet
-      #scala = project.compile.language == :scala
-
       # Only for projects that we support
       supported_languages = [:java, :scala]
       supported_packaging = %w(jar war rar mar aar)

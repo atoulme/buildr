@@ -63,10 +63,14 @@ module Buildr
     # Adds a nature to the registry.
     # Raises exception if the object provided isn't a Nature 
     # or if a Nature instance is already registered with the same id.
-    def add_nature(nature)
+    def add_nature(nature, before = nil)
       raise "#{nature} is not a nature!" if (!nature.is_a? Nature)
       raise "A nature with the same id is already present" if (get(nature.id))
-      @registered_natures << nature
+      if before.nil?
+        @registered_natures << nature
+      else
+        @registered_natures = @registered_natures.insert(@registered_natures.index(get(before)), nature) 
+      end
     end
 
     # Returns a nature, from its id.

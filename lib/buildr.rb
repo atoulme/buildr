@@ -20,6 +20,7 @@ end
 require 'buildr/core'
 require 'buildr/packaging'
 require 'buildr/java'
+require 'buildr/osgi'
 require 'buildr/ide'
 require 'buildr/shell'
 
