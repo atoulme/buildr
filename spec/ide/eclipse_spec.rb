@@ -62,6 +62,10 @@ module EclipseHelper
     task('eclipse').invoke
     REXML::Document.new(File.open('.project')).root.elements
   end
+  
+  def project_natures
+    project_xml_elements.collect("natures/nature") { |n| n.text }
+  end
 
 end
 
@@ -70,10 +74,6 @@ describe Buildr::Eclipse do
   include EclipseHelper
   
   describe "eclipse's .project file" do
-
-    def project_natures
-      project_xml_elements.collect("natures/nature") { |n| n.text }
-    end
     
     def build_commands
       project_xml_elements.collect("buildSpec/buildCommand/name") { |n| n.text }
@@ -321,6 +321,17 @@ describe Buildr::Eclipse do
       task('eclipse').invoke
       classpath_xml_elements.collect("classpathentry[@kind='var']") { |n| n.attributes['path'] }.
         should include('PROJ_REPO/com/example/library/2.0/library-2.0.jar')
+    end
+  end
+  
+  describe 'natures variable' do
+    it 'should be configurable' do
+      define('foo') do
+        eclipse.options.natures << 'dummyNature'
+        compile.using(:javac).with('com.example:library:jar:2.0') 
+      end
+      artifact('com.example:library:jar:2.0') { |task| write task.name }
+      project_natures.should include('dummyNature')
     end
   end
 end

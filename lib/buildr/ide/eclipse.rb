@@ -22,12 +22,7 @@ module Buildr
   module Eclipse #:nodoc:
     include Extension
 
-    def eclipse
-      Eclipse.instance
-    end
-
     class Eclipse
-      include Singleton
       
       attr_reader :options
        
@@ -37,11 +32,20 @@ module Buildr
     end
      
     class Options
-      attr_accessor :m2_repo_var
-
+      
+      attr_accessor :m2_repo_var, :natures, :builders, :classpath_containers
+      
       def initialize
+        @natures = []
+        @builders = []
+        @classpath_containers = []
         @m2_repo_var = 'M2_REPO'
       end
+    end
+    
+    def eclipse
+      @eclipse ||= Eclipse.new
+      @eclipse
     end
     
     first_time do
@@ -106,10 +110,13 @@ module Buildr
 
               classpathentry.output project.compile.target if project.compile.target
               classpathentry.lib libs
-              classpathentry.var m2_libs, Eclipse.instance.options.m2_repo_var, m2repo
+              classpathentry.var m2_libs, project.eclipse.options.m2_repo_var, m2repo
 
               classpathentry.con 'ch.epfl.lamp.sdt.launching.SCALA_CONTAINER' if scala
               classpathentry.con 'org.eclipse.jdt.launching.JRE_CONTAINER'
+              project.eclipse.options.classpath_containers.each {|container|
+                classpathentry.con container
+              }
             end
           end
         end
@@ -132,10 +139,18 @@ module Buildr
                     xml.name 'org.eclipse.jdt.core.javabuilder'
                   end
                 end
+                project.eclipse.options.builders.each {|builder|
+                  xml.buildCommand do
+                    xml.name builder
+                  end
+                }
               end
               xml.natures do
                 xml.nature 'ch.epfl.lamp.sdt.core.scalanature' if scala
                 xml.nature 'org.eclipse.jdt.core.javanature'
+                project.eclipse.options.natures.each {|nature|
+                  xml.nature nature
+                }
               end
             end
           end
