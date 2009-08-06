@@ -33,15 +33,15 @@ module Buildr
      
     class Options
       
+      attr_writer :m2_repo_var
+      
       def initialize(project)
         @project = project
       end
       
-      def m2_repo_var=(var)
-        raise 'm2_repo_var is already set!' if @m2_repo_var 
-        @m2_repo_var = var 
-      end
-      
+      # The classpath variable used to point at the local maven2 repository.
+      # Example:
+      #   M2_REPO
       def m2_repo_var
         if @m2_repo_var.nil?
           if project.parent
@@ -53,11 +53,21 @@ module Buildr
         @m2_repo_var
       end
       
-      def natures=(var)
-        raise 'natures are already set!' if @natures 
+      # :call-seq:
+      #   natures=(natures)
+      # Sets the Eclipse project natures on the project.
+      #
+      def natures=(var) 
         @natures = arrayfy(var) 
       end
       
+      # :call-seq:
+      #   natures() => [n1, n2]
+      # Returns the Eclipse project natures on the project.
+      # They may be derived from the parent project if no specific natures have been set
+      # on the project.
+      #
+      # An Eclipse project nature is used internally by Eclipse to determine the aspects of a project.
       def natures
         if @natures.nil?
           if project.parent
@@ -68,14 +78,25 @@ module Buildr
             @natures << "org.eclipse.jdt.core.javanature"
           end
         end
-        @natures.dup
+        @natures
       end
       
+      # :call-seq:
+      #   classpath_containers=(cc)
+      # Sets the Eclipse project classpath containers on the project.
+      #
       def classpath_containers=(var)
-        raise 'classpath_containers are already set!' if @classpath_containers 
         @classpath_containers = arrayfy(var) 
       end
       
+      # :call-seq:
+      #   classpath_containers() => [con1, con2]
+      # Returns the Eclipse project classpath containers on the project.
+      # They may be derived from the parent project if no specific classpath containers have been set
+      # on the project.
+      # 
+      # A classpath container is an Eclipse pre-determined ensemble of dependencies made available to
+      # the project classpath.
       def classpath_containers
         if @classpath_containers.nil?
           if project.parent
@@ -86,14 +107,24 @@ module Buildr
             @classpath_containers << "org.eclipse.jdt.launching.JRE_CONTAINER"
           end
         end
-        @classpath_containers.dup
+        @classpath_containers
       end
       
+      # :call-seq:
+      #   builders=(builders)
+      # Sets the Eclipse project builders on the project.
+      #
       def builders=(var)
-        raise 'builders are already set!' if @builders 
         @builders = arrayfy(var) 
       end
       
+      # :call-seq:
+      #   builders() => [b1, b2]
+      # Returns the Eclipse project builders on the project.
+      # They may be derived from the parent project if no specific builders have been set
+      # on the project.
+      # 
+      # A builder is an Eclipse background job that parses the source code to produce built artifacts.
       def builders
         if @builders.nil?
           if project.parent
@@ -107,7 +138,7 @@ module Buildr
             end
           end
         end
-        @builders.dup
+        @builders
       end
         
       private

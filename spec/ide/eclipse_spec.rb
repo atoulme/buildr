@@ -324,13 +324,6 @@ describe Buildr::Eclipse do
         should include('PROJ_REPO/com/example/library/2.0/library-2.0.jar')
     end
     
-    it 'should be possible to set it only once' do
-      define('foo') do
-        eclipse.options.m2_repo_var = 'PROJ_REPO'
-        lambda {eclipse.options.m2_repo_var = 'PROJ_REPO2'}.should raise_error(RuntimeError, /m2_repo_var is already set!/)
-      end
-    end
-    
     it 'should pick the parent value by default' do
       define('foo') do
         eclipse.options.m2_repo_var = 'FOO_REPO'
@@ -353,13 +346,6 @@ describe Buildr::Eclipse do
       end
       artifact('com.example:library:jar:2.0') { |task| write task.name }
       project_natures.should include('dummyNature')
-    end
-    
-    it 'should be possible to set it only once' do
-      define('foo') do
-        eclipse.options.natures = 'dummyNature'
-        lambda {eclipse.options.natures = ['dummyNature','otherDummyNature']}.should raise_error(RuntimeError, /natures are already set!/)
-      end
     end
     
     it 'should pick the parent value by default' do
@@ -386,13 +372,6 @@ describe Buildr::Eclipse do
       build_commands.should include('dummyBuilder')
     end
     
-    it 'should be possible to set it only once' do
-      define('foo') do
-        eclipse.options.builders = 'dummyBuilder'
-        lambda {eclipse.options.builders = ['dummyBuilder','dummyBuilderToo']}.should raise_error(RuntimeError, /builders are already set!/)
-      end
-    end
-    
     it 'should pick the parent value by default' do
       define('foo') do
         eclipse.options.builders = 'foo_builder'
@@ -415,14 +394,6 @@ describe Buildr::Eclipse do
       end
       artifact('com.example:library:jar:2.0') { |task| write task.name }
       classpath_containers.should include('myOlGoodContainer')
-    end
-    
-    it 'should be possible to set it only once' do
-      define('foo') do
-        eclipse.options.classpath_containers = 'myOlGoodContainer'
-        lambda {eclipse.options.classpath_containers = ['myOlGoodContainer','myOlGoodContainer2']}.
-          should raise_error(RuntimeError, /classpath_containers are already set!/)
-      end
     end
     
     it 'should pick the parent value by default' do
