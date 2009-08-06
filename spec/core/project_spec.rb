@@ -792,6 +792,11 @@ describe Buildr::NaturesRegistry do
     Buildr::Project.natures_registry.all().should include(@dummy)
   end
   
+  it 'should make natures available' do
+    Buildr::Project.natures_registry.get(:dummy).should eql(@dummy)
+    Buildr::Project.natures_registry.get("dummy").should eql(@dummy)
+  end
+  
   it 'should determine project natures from the applies method' do
     class DummyNatureAlwaysApply < Nature
       def initialize()
