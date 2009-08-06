@@ -26,25 +26,101 @@ module Buildr
       
       attr_reader :options
        
-      def initialize
-        @options = Options.new
+      def initialize(project)
+        @options = Options.new(project)
       end
     end
      
     class Options
       
-      attr_accessor :m2_repo_var, :natures, :builders, :classpath_containers
+      def initialize(project)
+        @project = project
+      end
       
-      def initialize
-        @natures = []
-        @builders = []
-        @classpath_containers = []
-        @m2_repo_var = 'M2_REPO'
+      def m2_repo_var=(var)
+        raise 'm2_repo_var is already set!' if @m2_repo_var 
+        @m2_repo_var = var 
+      end
+      
+      def m2_repo_var
+        if @m2_repo_var.nil?
+          if project.parent
+            @m2_repo_var = project.parent.eclipse.options.m2_repo_var
+          else
+            @m2_repo_var = 'M2_REPO'
+          end
+        end
+        @m2_repo_var
+      end
+      
+      def natures=(var)
+        raise 'natures are already set!' if @natures 
+        @natures = arrayfy(var) 
+      end
+      
+      def natures
+        if @natures.nil?
+          if project.parent
+            @natures = project.parent.eclipse.options.natures
+          else
+            @natures = []
+            @natures << 'ch.epfl.lamp.sdt.core.scalanature' if project.compile.language == :scala
+            @natures << "org.eclipse.jdt.core.javanature"
+          end
+        end
+        @natures.dup
+      end
+      
+      def classpath_containers=(var)
+        raise 'classpath_containers are already set!' if @classpath_containers 
+        @classpath_containers = arrayfy(var) 
+      end
+      
+      def classpath_containers
+        if @classpath_containers.nil?
+          if project.parent
+            @classpath_containers = project.parent.eclipse.options.classpath_containers
+          else
+            @classpath_containers = []
+            @classpath_containers << 'ch.epfl.lamp.sdt.launching.SCALA_CONTAINER' if project.compile.language == :scala
+            @classpath_containers << "org.eclipse.jdt.launching.JRE_CONTAINER"
+          end
+        end
+        @classpath_containers.dup
+      end
+      
+      def builders=(var)
+        raise 'builders are already set!' if @builders 
+        @builders = arrayfy(var) 
+      end
+      
+      def builders
+        if @builders.nil?
+          if project.parent
+            @builders = project.parent.eclipse.options.builders
+          else
+            @builders = []
+            if project.compile.language == :scala
+              @builders << 'ch.epfl.lamp.sdt.core.scalabuilder'
+            else 
+              @builders << "org.eclipse.jdt.core.javabuilder"
+            end
+          end
+        end
+        @builders.dup
+      end
+        
+      private
+        
+      attr_reader :project
+      
+      def arrayfy(obj)
+        obj.is_a?(Array) ? obj : [obj]
       end
     end
     
     def eclipse
-      @eclipse ||= Eclipse.new
+      @eclipse ||= Eclipse.new(self)
       @eclipse
     end
     
@@ -111,9 +187,7 @@ module Buildr
               classpathentry.output project.compile.target if project.compile.target
               classpathentry.lib libs
               classpathentry.var m2_libs, project.eclipse.options.m2_repo_var, m2repo
-
-              classpathentry.con 'ch.epfl.lamp.sdt.launching.SCALA_CONTAINER' if scala
-              classpathentry.con 'org.eclipse.jdt.launching.JRE_CONTAINER'
+              
               project.eclipse.options.classpath_containers.each {|container|
                 classpathentry.con container
               }
@@ -130,15 +204,6 @@ module Buildr
               xml.name project.id
               xml.projects
               xml.buildSpec do
-                if scala
-                  xml.buildCommand do
-                    xml.name 'ch.epfl.lamp.sdt.core.scalabuilder'
-                  end
-                else
-                  xml.buildCommand do
-                    xml.name 'org.eclipse.jdt.core.javabuilder'
-                  end
-                end
                 project.eclipse.options.builders.each {|builder|
                   xml.buildCommand do
                     xml.name builder
@@ -146,8 +211,6 @@ module Buildr
                 }
               end
               xml.natures do
-                xml.nature 'ch.epfl.lamp.sdt.core.scalanature' if scala
-                xml.nature 'org.eclipse.jdt.core.javanature'
                 project.eclipse.options.natures.each {|nature|
                   xml.nature nature
                 }

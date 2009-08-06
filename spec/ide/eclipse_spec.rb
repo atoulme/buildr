@@ -67,6 +67,13 @@ module EclipseHelper
     project_xml_elements.collect("natures/nature") { |n| n.text }
   end
 
+  def build_commands
+    project_xml_elements.collect("buildSpec/buildCommand/name") { |n| n.text }
+  end
+  
+  def classpath_containers attribute='path'
+    classpath_xml_elements.collect("classpathentry[@kind='con']") { |n| n.attributes[attribute] }
+  end
 end
 
 
@@ -74,10 +81,6 @@ describe Buildr::Eclipse do
   include EclipseHelper
   
   describe "eclipse's .project file" do
-    
-    def build_commands
-      project_xml_elements.collect("buildSpec/buildCommand/name") { |n| n.text }
-    end
     
     describe 'java project' do
       before do
@@ -137,9 +140,7 @@ describe Buildr::Eclipse do
     
     describe 'scala project' do
 
-      def classpath_containers attribute='path'
-        classpath_xml_elements.collect("classpathentry[@kind='con']") { |n| n.attributes[attribute] }
-      end
+      
       
       before do
         write 'buildfile'
@@ -322,16 +323,119 @@ describe Buildr::Eclipse do
       classpath_xml_elements.collect("classpathentry[@kind='var']") { |n| n.attributes['path'] }.
         should include('PROJ_REPO/com/example/library/2.0/library-2.0.jar')
     end
+    
+    it 'should be possible to set it only once' do
+      define('foo') do
+        eclipse.options.m2_repo_var = 'PROJ_REPO'
+        lambda {eclipse.options.m2_repo_var = 'PROJ_REPO2'}.should raise_error(RuntimeError, /m2_repo_var is already set!/)
+      end
+    end
+    
+    it 'should pick the parent value by default' do
+      define('foo') do
+        eclipse.options.m2_repo_var = 'FOO_REPO'
+        define('bar')
+        
+        define('bar2') do
+          eclipse.options.m2_repo_var = 'BAR2_REPO'
+        end
+      end  
+      project('foo:bar').eclipse.options.m2_repo_var.should eql('FOO_REPO')
+      project('foo:bar2').eclipse.options.m2_repo_var.should eql('BAR2_REPO')
+    end 
   end
   
   describe 'natures variable' do
     it 'should be configurable' do
       define('foo') do
-        eclipse.options.natures << 'dummyNature'
+        eclipse.options.natures = 'dummyNature'
         compile.using(:javac).with('com.example:library:jar:2.0') 
       end
       artifact('com.example:library:jar:2.0') { |task| write task.name }
       project_natures.should include('dummyNature')
+    end
+    
+    it 'should be possible to set it only once' do
+      define('foo') do
+        eclipse.options.natures = 'dummyNature'
+        lambda {eclipse.options.natures = ['dummyNature','otherDummyNature']}.should raise_error(RuntimeError, /natures are already set!/)
+      end
+    end
+    
+    it 'should pick the parent value by default' do
+      define('foo') do
+        eclipse.options.natures = 'foo_nature'
+        define('bar')
+        
+        define('bar2') do
+          eclipse.options.natures = 'bar2_nature'
+        end
+      end  
+      project('foo:bar').eclipse.options.natures.should include('foo_nature')
+      project('foo:bar2').eclipse.options.natures.should include('bar2_nature')
+    end
+  end
+  
+  describe 'builders variable' do
+    it 'should be configurable' do
+      define('foo') do
+        eclipse.options.builders = 'dummyBuilder'
+        compile.using(:javac).with('com.example:library:jar:2.0') 
+      end
+      artifact('com.example:library:jar:2.0') { |task| write task.name }
+      build_commands.should include('dummyBuilder')
+    end
+    
+    it 'should be possible to set it only once' do
+      define('foo') do
+        eclipse.options.builders = 'dummyBuilder'
+        lambda {eclipse.options.builders = ['dummyBuilder','dummyBuilderToo']}.should raise_error(RuntimeError, /builders are already set!/)
+      end
+    end
+    
+    it 'should pick the parent value by default' do
+      define('foo') do
+        eclipse.options.builders = 'foo_builder'
+        define('bar')
+        
+        define('bar2') do
+          eclipse.options.builders = 'bar2_builder'
+        end
+      end  
+      project('foo:bar').eclipse.options.builders.should include('foo_builder')
+      project('foo:bar2').eclipse.options.builders.should include('bar2_builder')
+    end
+  end
+  
+  describe 'classpath_containers variable' do
+    it 'should be configurable' do
+      define('foo') do
+        eclipse.options.classpath_containers = 'myOlGoodContainer'
+        compile.using(:javac).with('com.example:library:jar:2.0') 
+      end
+      artifact('com.example:library:jar:2.0') { |task| write task.name }
+      classpath_containers.should include('myOlGoodContainer')
+    end
+    
+    it 'should be possible to set it only once' do
+      define('foo') do
+        eclipse.options.classpath_containers = 'myOlGoodContainer'
+        lambda {eclipse.options.classpath_containers = ['myOlGoodContainer','myOlGoodContainer2']}.
+          should raise_error(RuntimeError, /classpath_containers are already set!/)
+      end
+    end
+    
+    it 'should pick the parent value by default' do
+      define('foo') do
+        eclipse.options.classpath_containers = 'foo_classpath_containers'
+        define('bar')
+        
+        define('bar2') do
+          eclipse.options.classpath_containers = 'bar2_classpath_containers'
+        end
+      end  
+      project('foo:bar').eclipse.options.classpath_containers.should include('foo_classpath_containers')
+      project('foo:bar2').eclipse.options.classpath_containers.should include('bar2_classpath_containers')
     end
   end
 end
