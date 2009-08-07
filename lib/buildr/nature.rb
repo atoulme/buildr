@@ -13,25 +13,10 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-module Buildr
-  VERSION = '1.3.5'.freeze
-end
+require 'buildr/nature/nature'
+require 'buildr/nature/java'
+require 'buildr/nature/scala'
+require 'buildr/nature/osgi'
 
-require 'buildr/core'
-require 'buildr/packaging'
-require 'buildr/java'
-require 'buildr/ide'
-require 'buildr/shell'
-require 'buildr/nature'
 
-# Methods defined in Buildr are both instance methods (e.g. when included in Project)
-# and class methods when invoked like Buildr.artifacts().
-module Buildr ; extend self ; end
-# The Buildfile object (self) has access to all the Buildr methods and constants.
-class << self ; include Buildr ; end
-class Object #:nodoc:
-  Buildr.constants.each do |name|
-    const = Buildr.const_get(name)
-    const_set name, const if const.is_a?(Module)
-  end
-end
+

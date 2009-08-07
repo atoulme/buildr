@@ -12,26 +12,21 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 # License for the specific language governing permissions and limitations under
 # the License.
-
+ 
 module Buildr
-  VERSION = '1.3.5'.freeze
-end
-
-require 'buildr/core'
-require 'buildr/packaging'
-require 'buildr/java'
-require 'buildr/ide'
-require 'buildr/shell'
-require 'buildr/nature'
-
-# Methods defined in Buildr are both instance methods (e.g. when included in Project)
-# and class methods when invoked like Buildr.artifacts().
-module Buildr ; extend self ; end
-# The Buildfile object (self) has access to all the Buildr methods and constants.
-class << self ; include Buildr ; end
-class Object #:nodoc:
-  Buildr.constants.each do |name|
-    const = Buildr.const_get(name)
-    const_set name, const if const.is_a?(Module)
-  end
+  class OSGiNature < Buildr::Nature
+ 
+    def initialize()
+      super(:osgi)
+      eclipse.natures = "org.eclipse.pde.PluginNature" 
+      eclipse.builders =  ["org.eclipse.pde.ManifestBuilder", "org.eclipse.pde.SchemaBuilder"]
+      eclipse.classpath_containers = "org.eclipse.pde.core.requiredPlugins"
+    end
+ 
+    def applies(project)
+      ((File.exists? project.path_to("plugin.xml")) || (File.exists? project.path_to("OSGI-INF")))
+    end
+  end 
+ 
+  NaturesRegistry.instance.add_nature(OSGiNature.new, :java)
 end
