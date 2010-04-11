@@ -1,0 +1,82 @@
+---
+layout: default
+title: Resolving
+---
+
+h2. Transitivity
+
+Every time you run a build with Maven, or PDE Build, you resolve all your dependencies in a transitive manner.
+
+What that means is that you read all the poms, all the manifests, and jump on the next pom, the next manifest. 
+You gather all the dependencies together. You validate them, throw a few errors and start building.
+
+With Buildr, you'll do the same BUT you won't do it every time you run a build.
+
+We keep builds reproducible.
+
+h2. Your dependencies
+
+h3. dependencies.yml
+
+We will arrange the dependencies in one YAML file named dependencies.yml at the root of the project.
+
+That file will be structured as followed:
+
+bc.. project id:
+  resolver:
+    dependencies:
+    - group:artifact:extension:version
+    - group:artifact:extension:version
+    projects:
+    - project id
+    - project id
+
+project id is the id of the project.
+resolver is the name of the resolver used for resolution. We have two main cases: @:osgi@ or @:pom@.
+Artifacts are listed under the artifacts node.
+Projects are listed under the projects node.
+
+Here is an example of a dependencies.yml:
+
+
+bc.. container:foo:
+  osgi:
+    artifacts:
+    - com.example:foo:jar:1.0
+    - com.example:foo2:jar:1.0
+    projects: []
+container:bar:
+  pom:
+    artifacts: []
+    projects:
+    - container:foo
+
+h3. Dependencies API
+
+To get access to the dependencies defined in the file, you can use this API:
+
+@compile.with dependencies(resolver)@
+
+It will bring all the artifacts and projects as a flat list.
+
+h3. Resolving
+
+From the command line:
+
+@buildr resolve:resolver@
+
+In practice:
+@buildr resolve:osgi@
+
+h3. Installing and uploading dependencies
+
+h4. Install the dependencies in your local Maven repository
+
+When you resolve your dependencies, you might be using jars that are not part of a Maven repository.
+We help users install dependencies in their local Maven repository.
+@buildr resolve:resolver:install@
+
+h4. Upload the dependencies to your remote Maven repository
+
+In the same way you can install dependencies, you can also upload them.
+@buildr resolve:resolver:upload@
