@@ -34,3 +34,4 @@ require 'buildr/core/transports'
 require 'buildr/core/generate'
 require 'buildr/core/cc'
 require 'buildr/core/osx' if RUBY_PLATFORM =~ /darwin/
+require 'buildr/core/resolve'
