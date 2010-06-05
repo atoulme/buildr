@@ -14,12 +14,27 @@
 # the License.
 
 
-require RUBY_PLATFORM == 'java' ? 'buildr/java/jruby' : 'buildr/java/rjb'
-require 'buildr/java/compiler'
-require 'buildr/java/external'
-require 'buildr/java/tests'
-require 'buildr/java/bdd'
-require 'buildr/java/packaging'
-require 'buildr/java/commands'
-require 'buildr/java/doc'
-require 'buildr/java/deprecated'
+require File.join(File.dirname(__FILE__), '../spec_helpers')
+
+describe Buildr::Compiler::ExternalJavac do
+  
+  before :all do
+    Buildr::Compiler.compilers.delete Buildr::Compiler::Javac
+    ENV['EXTERNAL_COMPILER'] = ENV['JAVA_HOME']
+  end
+  
+  describe "should compile a Java project just in the same way javac does" do  
+    javac_spec = File.read(File.join(File.dirname(__FILE__), "compiler_spec.rb"))
+    javac_spec = javac_spec.match(Regexp.escape("require File.join(File.dirname(__FILE__), '../spec_helpers')\n")).post_match
+    javac_spec.gsub!("javac", "externaljavac")
+    eval(javac_spec)
+  end
+  
+  after :all do
+    Buildr::Compiler.compilers << Buildr::Compiler::Javac
+    ENV['EXTERNAL_COMPILER']= nil
+  end
+  
+end
+
+
