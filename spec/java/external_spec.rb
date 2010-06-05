@@ -20,7 +20,6 @@ describe Buildr::Compiler::ExternalJavac do
   
   before :all do
     Buildr::Compiler.compilers.delete Buildr::Compiler::Javac
-    ENV['EXTERNAL_COMPILER'] = ENV['JAVA_HOME']
   end
   
   describe "should compile a Java project just in the same way javac does" do  
@@ -30,9 +29,20 @@ describe Buildr::Compiler::ExternalJavac do
     eval(javac_spec)
   end
   
+  it "should accept a :jvm option as JAVA_HOME" do
+    write 'src/main/java/Foo.java', 'public class Foo {}'
+    define "foo" do
+      compile.using(:externaljavac).options.jvm = "somepath"
+    end
+    begin
+      trace true #We set it true to grab the trace statement with the jvm path in it!
+      lambda {lambda {project("foo").compile.invoke}.should raise_error(RuntimeError, /Failed to compile, see errors above/)}.should show(/somepath\/bin\/javac .*/)
+    end
+    trace false
+  end
+  
   after :all do
     Buildr::Compiler.compilers << Buildr::Compiler::Javac
-    ENV['EXTERNAL_COMPILER']= nil
   end
   
 end
