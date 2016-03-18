@@ -1,3 +1,5 @@
+1.5.0 (pending)
+* Change : Update RJB to 1.5.4 
 1.4.24 (2016-03-15)
 * Added:  Support the :no_invoke parameter being passed to Buildr.project() and
           Buildr.projects() to avoid attempting to call invoke when retrieving the projects.
